@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebouncedCallback } from "use-debounce";
 
 import css from "./App.module.css";
 
-import { fetchNotes, deleteNote } from "../../services/noteService";
+import { fetchNotes } from "../../services/noteService";
 
 import NoteList from "../NoteList/NoteList";
 import Pagination from "../Pagination/Pagination";
@@ -17,11 +17,10 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError } = useQuery({
     queryKey: ["notes", page, search],
     queryFn: () => fetchNotes(page, search),
+    placeholderData: keepPreviousData,
   });
 
   const notes = data?.notes ?? [];
@@ -33,20 +32,11 @@ export default function App() {
     setPage(1);
   }, 500);
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-  });
-
-  // loading / error
   if (isLoading) return <p>Loading notes...</p>;
   if (isError) return <p>Error loading notes</p>;
 
   return (
     <div className={css.app}>
-      {/* HEADER */}
       <header className={css.toolbar}>
         <SearchBox value={search} onChange={debouncedSearch} />
 
@@ -61,15 +51,10 @@ export default function App() {
         <button onClick={() => setIsOpen(true)}>Create note +</button>
       </header>
 
-      {/* EMPTY STATE */}
       {isEmpty && <p>No notes found</p>}
 
-      {/* LIST */}
-      {notes.length > 0 && (
-        <NoteList notes={notes} onDelete={deleteMutation.mutate} />
-      )}
+      {!isEmpty && <NoteList notes={notes} />}
 
-      {/* MODAL */}
       {isOpen && (
         <Modal onClose={() => setIsOpen(false)}>
           <NoteForm onClose={() => setIsOpen(false)} />

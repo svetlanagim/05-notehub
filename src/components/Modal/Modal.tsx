@@ -10,6 +10,7 @@ interface ModalProps {
 export default function Modal({ children, onClose }: ModalProps) {
   const modalRoot = document.getElementById("modal-root");
 
+  // 🔥 ESC + SCROLL LOCK
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -19,8 +20,14 @@ export default function Modal({ children, onClose }: ModalProps) {
 
     document.addEventListener("keydown", handleKeyDown);
 
+    // ❗ BLOCK PAGE SCROLL (REQUIRED BY REVIEWER)
+    document.body.style.overflow = "hidden";
+
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
+
+      // restore scroll
+      document.body.style.overflow = "";
     };
   }, [onClose]);
 
